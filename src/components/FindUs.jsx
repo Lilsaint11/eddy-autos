@@ -3,7 +3,7 @@ import { MapPin, Clock, Phone, Mail, Navigation, ExternalLink } from 'lucide-rea
 
 const FindUs = () => {
   return (
-    <section className="bg-zinc-950 py-30 px-6 md:px-12 border-t border-white/5" id='contact'>
+    <section className="bg-zinc-950 py-30  max-md:py-10 px-6 md:px-12 border-t border-white/5" id='contact'>
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           

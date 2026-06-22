@@ -17,3 +17,9 @@ body {
   background-repeat: no-repeat;
   background-position: center;
 }
+
+@media (max-width: 768px) {
+  .hero {
+    background-size: contain;
+  }
+}

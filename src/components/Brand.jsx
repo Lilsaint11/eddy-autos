@@ -40,7 +40,7 @@ const Brand = () => {
         </h2>
 
         {/* Brands Flex Row */}
-        <div className="flex flex-wrap items-center justify-center gap-6 w-full">
+        <div className="md:flex md:flex-wrap max-md:grid max-md:grid-cols-2 items-center justify-center gap-6 w-full">
           {brands.map((brand, idx) => (
             <div
               key={idx}

@@ -3,7 +3,7 @@ import { Search } from 'lucide-react'
 
 const Hero = () => {
   return (
-    <div className='flex-1 flex flex-col items-center justify-center text-white text-center px-4 relative pt-40'>
+    <div className='flex-1 flex flex-col items-center justify-center text-white text-center px-4 relative lg:pt-40 max-lg:pt-30 max-lg:pb-30'>
       {/* Vertical Social Icons on the Left */}
       <div className='hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 flex-col items-center gap-6 z-40 animate-fade-in mt-20'>
 
@@ -48,7 +48,7 @@ const Hero = () => {
         </div>
       </div>
 
-      <div className='max-w-5xl mx-auto'>
+      <div className='max-w-5xl mx-auto max-lg:pt-20'>
         <h1 className='text-3xl md:text-4xl lg:text-6xl font-black tracking-tight mb-6 drop-shadow-2xl leading-none'>
             Explore 
             <span style={{

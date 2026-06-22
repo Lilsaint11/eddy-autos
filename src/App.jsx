@@ -26,7 +26,7 @@ const Home = () => {
   };
   return (
     <>
-    <div className='hero h-screen flexx items-center justify-center flex-col'>
+    <div className='hero lg:h-screen flexx items-center justify-center flex-col'>
       <Header onGoHome={handleGoHome} />
       <Hero />
     </div>

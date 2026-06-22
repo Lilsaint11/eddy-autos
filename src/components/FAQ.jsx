@@ -32,7 +32,7 @@ const FAQ = () => {
   }
 
   return (
-    <section className="bg-zinc-950 py-20 px-6 md:px-12 border-t border-white/5">
+    <section className="bg-zinc-950 py-20  max-md:py-10 px-5 md:px-12 border-t border-white/5">
       <div className="max-w-4xl mx-auto">
         {/* Section Title */}
         <div className="text-center mb-16">

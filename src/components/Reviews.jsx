@@ -30,7 +30,7 @@ const reviewData = [
 
 const Reviews = () => {
   return (
-    <section className="bg-zinc-950 py-30 px-6 md:px-12 border-t border-white/5" id='reviews'>
+    <section className="bg-zinc-950 py-30  max-md:py-10  max-md:py-10 px-6 md:px-12 border-t border-white/5" id='reviews'>
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
@@ -69,7 +69,7 @@ const Reviews = () => {
           {reviewData.map((review, idx) => (
             <div
               key={idx}
-              className="bg-zinc-900/30 border border-white/5 p-8 rounded-3xl hover:border-red-500/20 hover:bg-zinc-900/50 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden cursor-pointer"
+              className="bg-zinc-900/30 border border-white/5 p-8  max-md:p-4 rounded-3xl hover:border-red-500/20 hover:bg-zinc-900/50 transition-all duration-300 group flex flex-col justify-between relative overflow-hidden cursor-pointer"
             >
               {/* Giant abstract background quotes icon */}
               <Quote className="absolute right-6 top-6 w-16 h-16 text-white/2 opacity-[0.02] group-hover:scale-110 transition-transform duration-500 pointer-events-none" />
@@ -103,7 +103,7 @@ const Reviews = () => {
         </div>
 
         {/* Bottom Trust CTA Showcase */}
-        <div className="bg-gradient-to-r from-zinc-900/50 via-zinc-900/20 to-zinc-900/50 border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-zinc-900/50 via-zinc-900/20 to-zinc-900/50 border border-white/5 rounded-3xl md:p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4 text-left">
             <div className="p-3 bg-red-500/10 rounded-2xl text-red-500 shrink-0">
               <Award size={24} />

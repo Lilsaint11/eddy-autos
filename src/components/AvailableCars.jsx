@@ -79,7 +79,7 @@ const AvailableCars = () => {
   const { cars } = useCars()
 
   return (
-    <section className="bg-zinc-950 py-30 px-6 md:px-12" id='inventory'>
+    <section className="bg-zinc-950 py-30  max-md:py-10 px-6 md:px-12" id='inventory'>
       <div className="max-w-7xl mx-auto">
 
         {/* Section Header */}

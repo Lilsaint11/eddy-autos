@@ -4,16 +4,16 @@ import { Tag, CreditCard, ShieldCheck, Clock, ThumbsUp, Wrench  } from 'lucide-r
 
 const WhyUs = () => {
   return (
-    <div className='text-white px-15 py-30 flex gap-10' id='benefits'>
+    <div className='text-white px-15  max-md:px-10 py-30 max-md:py-10  flex max-lg:flex-col gap-10' id='benefits'>
       <div className='flex flex-col gap-10'>
         <h2 className="text-white font-black font-medium text-4xl leading-14">
           Experience the  <br /> Benefits of Buying Your Next Car <br /> with{' '}
           <span className="text-red-500">Eddy Autos</span>
         </h2>
 
-        <div className='flex gap-5'>
+        <div className='flex max-sm:flex-col gap-5'>
 
-          <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+          <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
             <h3 className='font-bold text-lg'>Competitive Pricing</h3>
             <p className='text-gray-400 text-sm leading-relaxed'>
               We source directly from trusted dealers and auctions so you get 
@@ -22,7 +22,7 @@ const WhyUs = () => {
             </p>
           </div>
 
-          <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+          <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
             <h3 className='font-bold text-lg'>Flexible Financing</h3>
             <p className='text-gray-400 text-sm leading-relaxed'>
               Whether you're paying upfront or spreading the cost, we offer 
@@ -34,8 +34,8 @@ const WhyUs = () => {
         </div>
       </div>
 
-        <div className='grid grid-cols-2 gap-5'>
-            <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+        <div className='grid grid-cols-2 gap-5 max-sm:flex max-sm:flex-col'>
+            <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
                
                 <h3 className='font-bold text-lg'>Verified Vehicles</h3>
                 <p className='text-gray-400 text-sm leading-relaxed'>
@@ -44,7 +44,7 @@ const WhyUs = () => {
                 </p>
             </div>
 
-            <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+            <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
                
                 <h3 className='font-bold text-lg'>Fast & Easy Process</h3>
                 <p className='text-gray-400 text-sm leading-relaxed'>
@@ -53,7 +53,7 @@ const WhyUs = () => {
                 </p>
             </div>
 
-            <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+            <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
               
                 <h3 className='font-bold text-lg'>Trusted by Thousands</h3>
                 <p className='text-gray-400 text-sm leading-relaxed'>
@@ -62,7 +62,7 @@ const WhyUs = () => {
                 </p>
             </div>
 
-            <div className='bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3 max-w-xs'>
+            <div className='bg-white/5 border border-white/10 rounded-2xl sm:p-6 flex flex-col gap-3 max-w-xs'>
                
                 <h3 className='font-bold text-lg'>After-Sale Support</h3>
                 <p className='text-gray-400 text-sm leading-relaxed'>
