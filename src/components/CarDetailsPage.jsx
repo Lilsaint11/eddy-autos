@@ -3,6 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useCars } from '../context/CarsContext'
 import { ArrowLeft, Gauge, Fuel, Settings, ShieldCheck, CalendarCheck, Send, CheckCircle2, Calendar, Phone, MessageSquare } from 'lucide-react'
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x250/111/fff?text=No+Image';
+  if (imagePath.startsWith('blob:')) return imagePath;
+  if (imagePath.startsWith('/uploads/')) return `${API_URL}${imagePath}`;
+  return imagePath;
+};
+
 const CarDetailsPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -38,7 +47,7 @@ const CarDetailsPage = () => {
 
   const extraSpecs = { engine: car.engine || 'Standard Engine', power: car.power || 'N/A', color: car.color || 'N/A', drive: car.drive || 'N/A' }
   // 4 identical images for the gallery mockup as requested
-  const galleryImages = [car.image, car.image, car.image, car.image]
+  const galleryImages = car.gallery && car.gallery.length > 0 ? car.gallery : (car.image ? [car.image] : [])
 
   // Set up mock initial message for DMs
   useEffect(() => {
@@ -117,7 +126,7 @@ const CarDetailsPage = () => {
             {/* Featured Image */}
             <div className="relative aspect-[16/10] w-full rounded-3xl overflow-hidden border border-white/5 bg-zinc-900 flex items-center justify-center shadow-2xl">
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 via-transparent to-transparent z-10" />
-              <img src={activeImage} alt={car.name} className="w-full h-full object-cover transition-all duration-500" />
+              <img src={getImageUrl(activeImage)} alt={car.name} className="w-full h-full object-cover transition-all duration-500" />
               
               {/* Badge & Year tags */}
               <div className="absolute top-6 left-6 z-20 flex gap-2">
@@ -146,7 +155,7 @@ const CarDetailsPage = () => {
                         : 'border-white/5 hover:border-white/20'
                     }`}
                   >
-                    <img src={img} alt={`${car.name} thumbnail`} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" />
+                    <img src={getImageUrl(img)} alt={`${car.name} thumbnail`} className="w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity" />
                     {/* Visual indicator of multiple slides */}
                     <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors" />
                   </button>

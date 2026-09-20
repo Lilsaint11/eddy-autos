@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useCars } from '../context/CarsContext'
+import { MapPin,TruckElectric, Fuel } from 'lucide-react'
 
 const badgeColors = {
   'Featured': 'bg-blue-600',
@@ -10,11 +11,33 @@ const badgeColors = {
   'New Arrival': 'bg-purple-600',
 }
 
-const FuelIcon = ({ type }) => (
-  <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${type === 'Electric' ? 'bg-green-500/15 text-green-400 border border-green-500/30' : 'bg-orange-500/15 text-orange-400 border border-orange-500/30'}`}>
-    {type === 'Electric' ? '⚡ Electric' : '⛽ Petrol'}
-  </span>
-)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x250/111/fff?text=No+Image';
+  if (imagePath.startsWith('blob:')) return imagePath;
+  if (imagePath.startsWith('/uploads/')) return `${API_URL}${imagePath}`;
+  return imagePath;
+};
+
+
+const FuelIcon = ({ type }) => {
+  const isElectric = type === 'Electric';
+  const Icon = isElectric ? TruckElectric : Fuel;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${
+        isElectric
+          ? ' text-green-400 border-green-500/30'
+          : ' text-orange-400 border-orange-500/30'
+      }`}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {isElectric ? 'Electric' : 'Petrol'}
+    </span>
+  );
+};
 
 const GearIcon = ({ type }) => (
   <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-white/5 text-gray-300 border border-white/10">
@@ -31,7 +54,7 @@ const CarCard = ({ car, onViewDetails }) => (
     <div className="relative h-48 bg-gradient-to-br from-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center rounded-md">
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent z-10" />
    
-     <img src={car.image} alt="" className='w-full' />
+     <img src={getImageUrl(car.image)} alt="" className='w-full' />
       {car.badge && (
         <span className={`absolute rounded-md font-light top-4 left-4 z-20 ${badgeColors[car.badge]} text-white text-[10px] font-black uppercase tracking-widest px-3 py-1`}>
           {car.badge}
@@ -49,8 +72,8 @@ const CarCard = ({ car, onViewDetails }) => (
 
       {/* Stats Row */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-white/5 text-gray-300 border border-white/10">
-          📍 {car.miles}
+        <span className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider bg-white/5 text-gray-300 border border-white/10 flex items-center gap-1">
+          <MapPin className="w-3 text-red-500" /> {car.miles}
         </span>
         <FuelIcon type={car.fuelType} />
         <GearIcon type={car.transmission} />

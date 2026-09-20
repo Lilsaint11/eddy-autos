@@ -5,7 +5,7 @@ import { useCars } from '../context/CarsContext';
 import { 
   Plus, Edit2, Trash2, Search, Filter, ShieldAlert, LogOut, 
   DollarSign, Car, BarChart3, Gauge, Settings, ShieldCheck, 
-  X, Check, AlertCircle, Info, RefreshCw
+  X, Check, AlertCircle, Info, RefreshCw,Fuel,TruckElectric
 } from 'lucide-react';
 
 const PRESET_IMAGES = [
@@ -16,6 +16,15 @@ const PRESET_IMAGES = [
   { label: 'Mercedes-Benz C-Class (Obsidian Black)', value: '/images/benz1.jpg' },
   { label: 'Hyundai Ioniq 5 (Cyber Grey)', value: '/images/hyundai1.jpg' }
 ];
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x250/111/fff?text=No+Image';
+  if (imagePath.startsWith('blob:')) return imagePath;
+  if (imagePath.startsWith('/uploads/')) return `${API_URL}${imagePath}`;
+  return imagePath;
+};
 
 const AdminDashboard = () => {
   const { isSignedIn, user, signOut, isClerkEnabled, isLoaded } = useAdminAuth();
@@ -52,9 +61,9 @@ const AdminDashboard = () => {
     fuelType: 'Petrol',
     transmission: 'Automatic',
     badge: '',
-    image: '/images/bmw1.jpg',
-    customImage: '',
-    useCustomImage: false,
+    image: '',
+    imageFiles: [],
+    imagePreviews: [],
     description: '',
     engine: '',
     power: '',
@@ -83,7 +92,12 @@ const AdminDashboard = () => {
 
   // Dashboard Stats Calculations
   const totalCars = cars.length;
-  const totalValue = cars.reduce((acc, car) => acc + (car.price || 0), 0);
+  const totalValue = cars.reduce((acc, car) => {
+  const numericPrice = Number(car.price) || 0;
+  return acc + numericPrice;
+}, 0);
+
+console.log('Total Value of Inventory:', totalValue);
   const avgPrice = totalCars > 0 ? Math.round(totalValue / totalCars) : 0;
   
   const electricCount = cars.filter(c => c.fuelType === 'Electric').length;
@@ -113,30 +127,34 @@ const AdminDashboard = () => {
       return;
     }
 
-    const newCar = {
-      name: form.name,
-      year: Number(form.year),
-      price: Number(form.price),
-      miles: form.miles || '0 miles',
-      fuelType: form.fuelType,
-      transmission: form.transmission,
-      badge: form.badge || null,
-      image: form.useCustomImage ? (form.customImage || '/images/bmw1.jpg') : form.image,
-      description: form.description || 'No description provided.',
-      engine: form.engine || 'Standard Engine',
-      power: form.power || 'N/A',
-      color: form.color || 'N/A',
-      drive: form.drive || 'N/A'
-    };
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('year', form.year);
+    formData.append('price', form.price);
+    formData.append('miles', form.miles || '0 miles');
+    formData.append('fuelType', form.fuelType);
+    formData.append('transmission', form.transmission);
+    if (form.badge) formData.append('badge', form.badge);
+    formData.append('description', form.description || 'No description provided.');
+    formData.append('engine', form.engine || 'Standard Engine');
+    formData.append('power', form.power || 'N/A');
+    formData.append('color', form.color || 'N/A');
+    formData.append('drive', form.drive || 'N/A');
 
-    addCar(newCar);
+    if (form.imageFiles && form.imageFiles.length > 0) {
+      form.imageFiles.forEach(file => {
+        formData.append('imageFiles', file);
+      });
+    }
+
+    console.log("NEW CAR BEING SENT");
+    addCar(formData);
     setIsAddOpen(false);
-    showToast(`Successfully added ${newCar.name}!`);
+    showToast(`Successfully added ${form.name}!`);
   };
 
   const openEditModal = (car) => {
     setSelectedCar(car);
-    const isPresetImg = PRESET_IMAGES.some(img => img.value === car.image);
     setForm({
       name: car.name,
       year: car.year,
@@ -145,9 +163,9 @@ const AdminDashboard = () => {
       fuelType: car.fuelType,
       transmission: car.transmission,
       badge: car.badge || '',
-      image: isPresetImg ? car.image : PRESET_IMAGES[0].value,
-      customImage: isPresetImg ? '' : car.image,
-      useCustomImage: !isPresetImg,
+      image: car.image,
+      imageFiles: [],
+      imagePreviews: car.gallery && car.gallery.length > 0 ? car.gallery : (car.image ? [car.image] : []),
       description: car.description || '',
       engine: car.engine || '',
       power: car.power || '',
@@ -164,25 +182,29 @@ const AdminDashboard = () => {
       return;
     }
 
-    const updatedCar = {
-      name: form.name,
-      year: Number(form.year),
-      price: Number(form.price),
-      miles: form.miles || '0 miles',
-      fuelType: form.fuelType,
-      transmission: form.transmission,
-      badge: form.badge || null,
-      image: form.useCustomImage ? (form.customImage || '/images/bmw1.jpg') : form.image,
-      description: form.description || 'No description provided.',
-      engine: form.engine || 'Standard Engine',
-      power: form.power || 'N/A',
-      color: form.color || 'N/A',
-      drive: form.drive || 'N/A'
-    };
+    const formData = new FormData();
+    formData.append('name', form.name);
+    formData.append('year', form.year);
+    formData.append('price', form.price);
+    formData.append('miles', form.miles || '0 miles');
+    formData.append('fuelType', form.fuelType);
+    formData.append('transmission', form.transmission);
+    if (form.badge) formData.append('badge', form.badge);
+    formData.append('description', form.description || 'No description provided.');
+    formData.append('engine', form.engine || 'Standard Engine');
+    formData.append('power', form.power || 'N/A');
+    formData.append('color', form.color || 'N/A');
+    formData.append('drive', form.drive || 'N/A');
 
-    updateCar(selectedCar.id, updatedCar);
+    if (form.imageFiles && form.imageFiles.length > 0) {
+      form.imageFiles.forEach(file => {
+        formData.append('imageFiles', file);
+      });
+    }
+
+    updateCar(selectedCar.id, formData);
     setIsEditOpen(false);
-    showToast(`Successfully updated ${updatedCar.name}!`);
+    showToast(`Successfully updated ${form.name}!`);
   };
 
   const openDeleteModal = (car) => {
@@ -322,12 +344,12 @@ const AdminDashboard = () => {
             <div className="flex justify-between items-center gap-3">
               <div>
                 <span className="text-zinc-500 text-[9px] uppercase font-bold block">Petrol</span>
-                <span className="text-white font-bold text-sm">⛽ {petrolCount} cars</span>
+                <span className="text-white font-bold text-sm flex items-center gap-2"><Fuel className="w-4" /> {petrolCount} cars</span>
               </div>
               <div className="h-8 w-px bg-white/10"></div>
               <div>
                 <span className="text-zinc-500 text-[9px] uppercase font-bold block">Electric</span>
-                <span className="text-white font-bold text-sm">⚡ {electricCount} cars</span>
+                <span className="text-white font-bold text-sm flex items-center gap-2"><TruckElectric className="w-4" /> {electricCount} cars</span>
               </div>
             </div>
           </div>
@@ -415,7 +437,7 @@ const AdminDashboard = () => {
                     <tr key={car.id} className="hover:bg-white/[0.02] transition-colors duration-200">
                       <td className="py-4 px-6 flex items-center gap-4">
                         <div className="w-14 h-10 rounded-lg overflow-hidden bg-zinc-800 border border-white/5 flex items-center justify-center shrink-0">
-                          <img src={car.image} alt={car.name} className="w-full h-full object-cover" />
+                          <img src={getImageUrl(car.image)} alt={car.name} className="w-full h-full object-cover" />
                         </div>
                         <div>
                           <span className="font-bold text-white block text-sm tracking-tight hover:text-red-400 cursor-pointer transition-colors" onClick={() => navigate(`/cars/${car.id}`)}>
@@ -610,72 +632,55 @@ const AdminDashboard = () => {
               {/* Row 4: Image Selector */}
               <div className="border-t border-white/5 pt-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Vehicle Image</span>
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, useCustomImage: false })}
-                      className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${!form.useCustomImage ? 'bg-red-500/20 text-red-400 border border-red-500/25' : 'text-zinc-500'}`}
-                    >
-                      Presets
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, useCustomImage: true })}
-                      className={`text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md transition-colors ${form.useCustomImage ? 'bg-red-500/20 text-red-400 border border-red-500/25' : 'text-zinc-500'}`}
-                    >
-                      Custom Link
-                    </button>
-                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Vehicle Image Upload</span>
                 </div>
 
-                {!form.useCustomImage ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase font-semibold text-zinc-500 block">Select Preset</label>
-                      <select
-                        value={form.image}
-                        onChange={(e) => setForm({ ...form, image: e.target.value })}
-                        className="w-full bg-zinc-950 border border-white/10 focus:border-red-500/50 rounded-xl py-3 px-4 text-xs outline-none cursor-pointer"
-                      >
-                        {PRESET_IMAGES.map((img) => (
-                          <option key={img.value} value={img.value}>{img.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="w-full h-20 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center overflow-hidden">
-                      <img src={form.image} alt="Preview" className="h-full w-full object-cover" />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="sm:col-span-3 space-y-1">
+                    <label className="text-[9px] uppercase font-semibold text-zinc-500 block">Select Image from Computer</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files);
+                        if (files.length > 0) {
+                          const newPreviews = files.map(file => URL.createObjectURL(file));
+                          setForm({ 
+                            ...form, 
+                            imageFiles: files, 
+                            imagePreviews: newPreviews 
+                          });
+                        }
+                      }}
+                      className="w-full bg-zinc-950 border border-white/10 focus:border-red-500/50 rounded-xl py-2 px-4 text-xs outline-none transition-all text-zinc-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-500/10 file:text-red-500 hover:file:bg-red-500/20 cursor-pointer"
+                    />
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div className="sm:col-span-3 space-y-1">
-                      <label className="text-[9px] uppercase font-semibold text-zinc-500 block">Image URL / Path</label>
-                      <input
-                        type="text"
-                        value={form.customImage}
-                        onChange={(e) => setForm({ ...form, customImage: e.target.value })}
-                        className="w-full bg-zinc-950 border border-white/10 focus:border-red-500/50 rounded-xl py-3 px-4 text-xs outline-none transition-all text-zinc-300"
-                        placeholder="https://images.unsplash.com/photo-... or /images/custom.jpg"
-                      />
-                    </div>
-                    <div className="w-full h-20 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center overflow-hidden">
-                      {form.customImage ? (
-                        <img 
-                          src={form.customImage} 
-                          alt="Preview" 
-                          className="h-full w-full object-cover" 
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/400x250/111/fff?text=No+Image';
-                          }}
-                        />
-                      ) : (
-                        <span className="text-[9px] text-zinc-650 uppercase font-black tracking-widest">No Link</span>
-                      )}
-                    </div>
+                  <div className="w-full min-h-20 rounded-xl bg-zinc-950 border border-white/10 flex flex-wrap items-center justify-center p-2 gap-2">
+                    {form.imagePreviews && form.imagePreviews.length > 0 ? (
+                      form.imagePreviews.map((preview, index) => (
+                        <div key={index} className="w-20 h-20 rounded-lg overflow-hidden border border-white/5 relative">
+                          <img 
+                            src={getImageUrl(preview)} 
+                            alt={`Preview ${index}`} 
+                            className="h-full w-full object-cover" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://placehold.co/400x250/111/fff?text=No+Image';
+                            }}
+                          />
+                          {index === 0 && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[8px] text-center font-bold uppercase tracking-widest text-zinc-300 py-0.5">
+                              Cover
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-[9px] text-zinc-650 uppercase font-black tracking-widest">No Image</span>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Row 5: Detailed Specifications */}
