@@ -12,11 +12,13 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.61.8",
     "@tailwindcss/vite": "^4.3.0",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react": "^1.16.0",
     "multer": "^2.4.0",
+    "multer-storage-cloudinary": "^4.0.0",
     "pg": "^8.23.0",
     "pg-hstore": "^2.3.4",
     "react": "^19.2.6",

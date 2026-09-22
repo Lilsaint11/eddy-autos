@@ -4,20 +4,28 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Car from "../models/Car.js";
 
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../uploads/"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'eddy-autos',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
   }
 });
+
 const upload = multer({ storage: storage });
 
 /*
@@ -79,7 +87,7 @@ router.post("/", upload.array("imageFiles", 10), async (req, res) => {
     let gallery = [];
     
     if (req.files && req.files.length > 0) {
-      gallery = req.files.map(file => `/uploads/${file.filename}`);
+      gallery = req.files.map(file => file.path);
       imageUrl = gallery[0];
     }
 
@@ -139,7 +147,7 @@ router.put("/:id", upload.array("imageFiles", 10), async (req, res) => {
     let gallery = car.gallery || [];
 
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/${file.filename}`);
+      const newImages = req.files.map(file => file.path);
       gallery = [...gallery, ...newImages];
       if (!imageUrl || imageUrl.includes('placehold.co')) {
         imageUrl = gallery[0];
