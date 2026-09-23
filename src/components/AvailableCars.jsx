@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useCars } from '../context/CarsContext'
 import { MapPin,TruckElectric, Fuel } from 'lucide-react'
 
@@ -10,15 +10,6 @@ const badgeColors = {
   'Premium': 'bg-yellow-600',
   'New Arrival': 'bg-purple-600',
 }
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
-
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return 'https://placehold.co/400x250/111/fff?text=No+Image';
-  if (imagePath.startsWith('blob:')) return imagePath;
-  if (imagePath.startsWith('/uploads/')) return `${API_URL}${imagePath}`;
-  return imagePath;
-};
 
 
 const FuelIcon = ({ type }) => {
@@ -54,7 +45,7 @@ const CarCard = ({ car, onViewDetails }) => (
     <div className="relative h-48 bg-gradient-to-br from-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center rounded-md">
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent z-10" />
    
-     <img src={getImageUrl(car.image)} alt="" className='w-full' />
+     <img src={car.image} alt="" className='w-full' />
       {car.badge && (
         <span className={`absolute rounded-md font-light top-4 left-4 z-20 ${badgeColors[car.badge]} text-white text-[10px] font-black uppercase tracking-widest px-3 py-1`}>
           {car.badge}
@@ -100,39 +91,55 @@ const CarCard = ({ car, onViewDetails }) => (
 
 const AvailableCars = () => {
   const { cars } = useCars()
+  const [searchParams] = useSearchParams()
+  const query = (searchParams.get('search') || '').trim().toLowerCase()
+
+  const filteredCars = query
+    ? cars.filter(car =>
+        [car.name, car.description, car.badge, car.fuelType, car.transmission, String(car.year)]
+          .filter(Boolean)
+          .some(field => String(field).toLowerCase().includes(query))
+      )
+    : cars
 
   return (
-    <section className="bg-zinc-950 py-30  max-md:py-10 px-6 md:px-12" id='inventory'>
+    <section className="bg-zinc-950 py-30 max-md:py-10 px-6 md:px-12" id="inventory">
       <div className="max-w-7xl mx-auto">
 
         {/* Section Header */}
-        <div className='flex flex-col items-center justify-center mb-10'>
-          <div className='flex justify-between items-center w-full'>
-            <h2 className="text-white font-black font-medium text-4xl  leading-none">
-              Available <span className="text-red-500 ">Cars</span>
+        <div className="flex flex-col items-center justify-center mb-10">
+          <div className="flex justify-between items-center w-full">
+            <h2 className="text-white font-black text-4xl leading-none">
+              {query ? (
+                <>Results for <span className="text-red-500">"{query}"</span></>
+              ) : (
+                <>Available <span className="text-red-500">Cars</span></>
+              )}
             </h2>
-            <a
-              href="/cars"
-              className="group inline-flex items-center gap-3 text-white  hover:text-red-500 px-8 py-4 font-black font-light tracking-widest text-sm transition-all duration-300 self-start md:self-auto whitespace-nowrap"
+            <Link
+              to="/cars"
+              className="group inline-flex items-center gap-3 text-white hover:text-red-500 px-8 py-4 font-light tracking-widest text-sm transition-all duration-300 self-start md:self-auto whitespace-nowrap"
             >
               See All Cars
               <span className="group-hover:translate-x-1 transition-transform duration-300 text-base">→</span>
-            </a>
+            </Link>
           </div>
         </div>
 
         {/* Car Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {cars.map(car => (
-            <Link
-              key={car.id}
-              to={`/cars/${car.id}`}
-              className="block"
-            >
-              <CarCard car={car} />
-            </Link>
-          ))}
-        </div>
+        {filteredCars.length === 0 ? (
+          <p className="text-gray-400 text-center py-20">
+            No cars matched your search. Try a different keyword.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredCars.map(car => (
+              <Link key={car.id} to={`/cars/${car.id}`} className="block">
+                <CarCard car={car} />
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )

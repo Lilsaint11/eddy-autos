@@ -27,7 +27,6 @@ const Header = ({ onGoHome }) => {
             <a href="#inventory" className='text-sm  tracking-widest font-semibold text-gray-300 hover:text-red-500 transition-colors duration-300 border-b-2 border-transparent hover:border-red-500 pb-1'>Inventory</a>
             <a href="#benefits" className='text-sm  tracking-widest font-semibold text-gray-300 hover:text-red-500 transition-colors duration-300 border-b-2 border-transparent hover:border-red-500 pb-1'>Benefits</a>
             <a href="#reviews" className='text-sm  tracking-widest font-semibold text-gray-300 hover:text-red-500 transition-colors duration-300 border-b-2 border-transparent hover:border-red-500 pb-1'>Reviews</a>
-            <a href="/admin" className='text-sm  tracking-widest font-semibold text-gray-300 hover:text-red-500 transition-colors duration-300 border-b-2 border-transparent hover:border-red-500 pb-1'>Admin</a>
         </nav>
         
         <div className='hidden md:block'>
