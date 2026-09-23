@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AuthContext';
 import { useCars } from '../context/CarsContext';
+import AdminChatInbox from './AdminChatInbox';
 import { 
   Plus, Edit2, Trash2, Search, Filter, ShieldAlert, LogOut, 
   DollarSign, Car, BarChart3, Gauge, Settings, ShieldCheck, 
-  X, Check, AlertCircle, Info, RefreshCw,Fuel,TruckElectric
+  X, Check, AlertCircle, Info, RefreshCw, Fuel, TruckElectric, MessageSquare
 } from 'lucide-react';
 
 const PRESET_IMAGES = [
@@ -51,6 +52,9 @@ const AdminDashboard = () => {
   
   // Notification Toast state
   const [toast, setToast] = useState(null);
+
+  // Dashboard view state (inventory or messages)
+  const [dashboardView, setDashboardView] = useState('inventory');
 
   // Form states
   const initialFormState = {
@@ -267,7 +271,43 @@ console.log('Total Value of Inventory:', totalValue);
         </div>
       </header>
 
-      {/* Main Panel Content */}
+      {/* Dashboard Tabs */}
+      <div className="border-b border-white/5 bg-zinc-900/20 px-6">
+        <div className="max-w-7xl mx-auto flex gap-1">
+          <button
+            onClick={() => setDashboardView('inventory')}
+            className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border-b-2 ${
+              dashboardView === 'inventory' 
+                ? 'text-red-500 border-red-500' 
+                : 'text-zinc-500 border-transparent hover:text-zinc-300'
+            }`}
+          >
+            <span className="flex items-center gap-2"><Car size={14} /> Inventory</span>
+          </button>
+          <button
+            onClick={() => setDashboardView('messages')}
+            className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer border-b-2 relative ${
+              dashboardView === 'messages' 
+                ? 'text-red-500 border-red-500' 
+                : 'text-zinc-500 border-transparent hover:text-zinc-300'
+            }`}
+          >
+            <span className="flex items-center gap-2"><MessageSquare size={14} /> Messages</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Messages View */}
+      {dashboardView === 'messages' && (
+        <div className="flex-1 max-w-7xl w-full mx-auto">
+          <div className="bg-zinc-900/10 border border-white/5 rounded-3xl mt-6 mx-6 md:mx-10 overflow-hidden" style={{ height: 'calc(100vh - 180px)' }}>
+            <AdminChatInbox />
+          </div>
+        </div>
+      )}
+
+      {/* Inventory View */}
+      {dashboardView === 'inventory' && (
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-10 space-y-8">
         
         {/* Mock Auth Mode Warning */}
@@ -501,6 +541,7 @@ console.log('Total Value of Inventory:', totalValue);
           </div>
         </div>
       </main>
+      )}
 
       {/* FOOTER BAR */}
       <footer className="py-6 border-t border-white/5 text-center text-[10px] text-zinc-650 uppercase tracking-widest font-bold">
@@ -794,7 +835,6 @@ console.log('Total Value of Inventory:', totalValue);
           </div>
         </div>
       )}
-
     </div>
   );
 };

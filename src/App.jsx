@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import CarDetailsPage from './components/CarDetailsPage';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
+import { ChatProvider } from './context/ChatContext';
 
 // Home page layout component
 const Home = () => {
@@ -43,14 +44,16 @@ const Home = () => {
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/cars/:id" element={<CarDetailsPage />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-      </Routes>
-    </BrowserRouter>
+    <ChatProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/cars/:id" element={<CarDetailsPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+        </Routes>
+      </BrowserRouter>
+    </ChatProvider>
   );
 };
 

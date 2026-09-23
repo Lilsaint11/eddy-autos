@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useCars } from '../context/CarsContext'
-import { ArrowLeft, Gauge, Fuel, Settings, ShieldCheck, CalendarCheck, Send, CheckCircle2, Calendar, Phone, MessageSquare } from 'lucide-react'
+import { useChat } from '../context/ChatContext'
+import { ArrowLeft, Gauge, Fuel, Settings, ShieldCheck, CalendarCheck, Send, CheckCircle2, Calendar, Phone, MessageSquare, User } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
@@ -22,17 +23,206 @@ const CarDetailsPage = () => {
   const [viewMode, setViewMode] = useState('details')
   const handleBack = () => navigate('/')
 
+  const { joinConversation, sendMessage, onNewMessage, offNewMessage, fetchHistory, sessionId } = useChat()
   const [chatMessages, setChatMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [bookingSuccess, setBookingSuccess] = useState(false)
-  const [bookingForm, setBookingForm] = useState({ name: '', phone: '', date: '', time: '09:00 AM' })
+  const [clientName, setClientName] = useState(localStorage.getItem('chat_client_name') || '')
+  const [showNameInput, setShowNameInput] = useState(!localStorage.getItem('chat_client_name'))
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef(null)
+  const createTempMessageId = () =>
+  `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
   useEffect(() => {
     if (car && !activeImage) {
       setActiveImage(car.image)
     }
   }, [car, activeImage])
+
+  // Join the socket room and load history when entering chat mode
+ useEffect(() => {
+  if (viewMode !== "dm" || !car?.id) {
+    return;
+  }
+
+  console.log(
+    "💬 Opening chat for car:",
+    car.id
+  );
+
+  joinConversation(car.id);
+
+  setChatLoading(true);
+
+  fetchHistory(car.id)
+    .then((msgs) => {
+      setChatMessages(msgs || []);
+    })
+    .catch((error) => {
+      console.error(
+        "Failed to load chat history:",
+        error
+      );
+      setChatMessages([]);
+    })
+    .finally(() => {
+      setChatLoading(false);
+    });
+}, [
+  viewMode,
+  car?.id,
+  joinConversation,
+  fetchHistory,
+]);
+
+  // Listen for new real-time messages
+useEffect(() => {
+  const handleMsg = (msg) => {
+    if (
+      String(msg.carId) !== String(car?.id) ||
+      String(msg.sessionId) !== String(sessionId)
+    ) {
+      return;
+    }
+
+    setChatMessages((prev) => {
+      // If this is the server-confirmed version of one
+      // of our optimistic messages, replace the temporary one.
+      const tempIndex = prev.findIndex(
+        (message) =>
+          String(message.id).startsWith("temp_") &&
+          message.text === msg.text &&
+          message.senderType === "client"
+      );
+
+      if (tempIndex !== -1) {
+        const updated = [...prev];
+
+        updated[tempIndex] = {
+          ...msg,
+          status: "sent",
+        };
+
+        return updated;
+      }
+
+      // Don't add an actual message that already exists.
+      if (
+        prev.some(
+          (message) =>
+            String(message.id) === String(msg.id)
+        )
+      ) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          ...msg,
+          status: "sent",
+        },
+      ];
+    });
+  };
+
+  onNewMessage(handleMsg);
+
+  return () => {
+    offNewMessage(handleMsg);
+  };
+}, [
+  car?.id,
+  sessionId,
+  onNewMessage,
+  offNewMessage,
+]);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+
+  const text = inputMessage.trim();
+
+  if (!text || !car?.id) return;
+
+  const tempId = createTempMessageId();
+
+  const optimisticMessage = {
+    id: tempId,
+    carId: Number(car.id),
+    sessionId,
+    clientName: clientName?.trim() || "Anonymous",
+    senderType: "client",
+    text,
+    read: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    status: "sending",
+  };
+
+  // 1. SHOW MESSAGE IMMEDIATELY
+  setChatMessages((prev) => [
+    ...prev,
+    optimisticMessage,
+  ]);
+
+  // 2. Clear input immediately
+  setInputMessage("");
+
+  try {
+    // 3. Send to server
+    const savedMessage = await sendMessage(
+      car.id,
+      text,
+      clientName || "Anonymous"
+    );
+
+    // 4. Replace temporary message with server version
+    if (savedMessage) {
+      setChatMessages((prev) =>
+        prev.map((message) =>
+          message.id === tempId
+            ? {
+                ...savedMessage,
+                status: "sent",
+              }
+            : message
+        )
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Failed to send message:",
+      error
+    );
+
+    // 5. Remove failed optimistic message
+    setChatMessages((prev) =>
+      prev.filter((message) => message.id !== tempId)
+    );
+
+    // Put the text back so the user doesn't lose it
+    setInputMessage(text);
+
+    alert(
+      error?.message ||
+        "Failed to send message. Please try again."
+    );
+  }
+};
+
+  const handleSetName = (e) => {
+    e.preventDefault()
+    if (clientName.trim()) {
+      localStorage.setItem('chat_client_name', clientName.trim())
+      setShowNameInput(false)
+    }
+  }
 
   if (!car) {
     return (
@@ -46,57 +236,7 @@ const CarDetailsPage = () => {
   }
 
   const extraSpecs = { engine: car.engine || 'Standard Engine', power: car.power || 'N/A', color: car.color || 'N/A', drive: car.drive || 'N/A' }
-  // 4 identical images for the gallery mockup as requested
   const galleryImages = car.gallery && car.gallery.length > 0 ? car.gallery : (car.image ? [car.image] : [])
-
-  // Set up mock initial message for DMs
-  useEffect(() => {
-    if (viewMode === 'dm' && chatMessages.length === 0) {
-      setChatMessages([
-        {
-          id: 1,
-          sender: 'dealer',
-          text: `Hi there! I'm Eddy. I see you're looking at our beautiful ${car.year} ${car.name}. Let me know if you would like to ask any questions or schedule a private showroom inspection!`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ])
-      setInputMessage(`Hi Eddy! I'm really interested in the ${car.name} priced at $${car.price.toLocaleString()}. Is it available for a physical walkthrough this week?`)
-    }
-  }, [viewMode])
-
-  const handleSendMessage = (e) => {
-    e.preventDefault()
-    if (!inputMessage.trim()) return
-
-    const userMsg = {
-      id: Date.now(),
-      sender: 'user',
-      text: inputMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-
-    setChatMessages(prev => [...prev, userMsg])
-    setInputMessage('')
-    setIsTyping(true)
-
-    // Simulate Dealer typing response
-    setTimeout(() => {
-      setIsTyping(false)
-      const dealerMsg = {
-        id: Date.now() + 1,
-        sender: 'dealer',
-        text: `Absolutely! The ${car.name} is fully inspected, detailed, and sitting on our main showroom floor in Las Vegas. What day this week fits your schedule best to come down and inspect it in person?`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-      setChatMessages(prev => [...prev, dealerMsg])
-    }, 1800)
-  }
-
-  const handleBookingSubmit = (e) => {
-    e.preventDefault()
-    if (!bookingForm.name || !bookingForm.phone || !bookingForm.date) return
-    setBookingSuccess(true)
-  }
 
   return (
     <div className="bg-zinc-950 min-h-screen text-white pt-24 pb-16 px-6 md:px-12">
@@ -264,22 +404,118 @@ const CarDetailsPage = () => {
                   </div>
 
                   <div className="flex gap-4 justify-between">
-                  <a href="https://x.com" target="_blank" rel="noreferrer">
-                    <button className="flex-1 bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg px-3">
-                      <CalendarCheck size={14} />
-                      Book Inspection
-                    </button>
-                  </a>
-                  <a href="https://x.com" target="_blank" rel="noreferrer">
                     <button 
-                       className="flex-1 bbg-red-650 hover:bg-red-750 text-white text-xs font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg px-3"
+                      onClick={() => setViewMode('dm')}
+                      className="flex-1 bg-white hover:bg-zinc-200 text-black text-xs font-black uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-lg px-3"
                     >
                       <MessageSquare size={14} />
-                      Chat in DMs
+                      Chat with Eddy
                     </button>
-                  </a>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* VIEW MODE: DM CHAT */}
+            {viewMode === 'dm' && (
+              <div className="p-6 flex flex-col h-full">
+                {/* Chat Header */}
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-red-500/20 flex items-center justify-center text-red-500">
+                      <MessageSquare size={16} />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-sm">Chat about {car.name}</h3>
+                      <span className="text-zinc-500 text-[10px] uppercase tracking-widest font-semibold">Real-time · Eddy Autos</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setViewMode('details')}
+                    className="text-zinc-500 hover:text-red-500 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                  >
+                    ← Back
+                  </button>
+                </div>
+
+                {/* Name Input */}
+                {showNameInput && (
+                  <form onSubmit={handleSetName} className="mb-4 flex gap-2">
+                    <div className="flex-1 relative">
+                      <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                      <input
+                        type="text"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        placeholder="Enter your name to start chatting..."
+                        className="w-full bg-zinc-900/60 border border-white/10 rounded-xl py-2.5 pl-9 pr-4 text-xs text-white placeholder-zinc-500 outline-none focus:border-red-500/50 transition-all"
+                      />
+                    </div>
+                    <button 
+                      type="submit"
+                      className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase tracking-widest px-4 rounded-xl transition-colors cursor-pointer"
+                    >
+                      Join
+                    </button>
+                  </form>
+                )}
+
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1" style={{ scrollbarWidth: 'thin', scrollbarColor: '#333 transparent' }}>
+                  {chatLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-zinc-500 text-xs font-semibold animate-pulse">Loading messages...</div>
+                    </div>
+                  ) : chatMessages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-2">
+                      <MessageSquare size={28} className="text-zinc-700" />
+                      <p className="text-zinc-600 text-xs text-center">No messages yet. Say hi to Eddy about this {car.name}!</p>
+                    </div>
+                  ) : (
+                    chatMessages.map((msg) => (
+                      <div 
+                        key={msg.id} 
+                        className={`flex ${msg.senderType === 'client' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                          msg.senderType === 'client' 
+                            ? 'bg-red-600/90 text-white rounded-br-md' 
+                            : 'bg-zinc-800/80 text-zinc-200 rounded-bl-md border border-white/5'
+                        }`}>
+                          {msg.senderType === 'admin' && (
+                            <span className="text-red-400 text-[9px] font-black uppercase tracking-widest block mb-1">Eddy</span>
+                          )}
+                          <p className="text-xs leading-relaxed">{msg.text}</p>
+                          <span className={`text-[9px] mt-1 block ${
+                            msg.senderType === 'client' ? 'text-red-200/60' : 'text-zinc-500'
+                          }`}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Message Input */}
+                <form onSubmit={handleSendMessage} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder={showNameInput ? 'Enter your name first...' : 'Type a message...'}
+                    disabled={showNameInput}
+                    className="flex-1 bg-zinc-900/60 border border-white/10 rounded-xl py-3 px-4 text-xs text-white placeholder-zinc-500 outline-none focus:border-red-500/50 transition-all disabled:opacity-40"
+                  />
+                  <button 
+                    type="submit" 
+                    disabled={showNameInput || !inputMessage.trim()}
+                    className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white p-3 rounded-xl transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <Send size={16} />
+                  </button>
+                </form>
               </div>
             )}
 
